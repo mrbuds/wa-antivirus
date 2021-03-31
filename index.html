@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>WeakAuras Antivirus</title>
+    <style>
+        #multi {
+            column-count: 3;
+            column-gap: 10px;
+        }
+        #wago-string, #copy-here, #output {
+            font-family: monaco,consolas,"courier new",monospace;
+            font-size: 1em;
+            min-height: 50em;
+            overflow: auto;
+            padding: 1em;
+            width: 95%;
+            background-color: rgb(207, 207, 207);
+            overflow-wrap: break-word;
+        }
+        #instruction {
+            background-color: rgb(236, 22, 22);
+        }
+        .red {
+            background-color: rgb(236, 22, 22);
+        }
+        .green {
+            background-color: green;
+        }
+    </style>
+</head>
+<body>
+    <p>Paste wago url
+        <input type="input" class="wago-url" size="60">
+
+        <button id="Start">Start</button>
+
+        <span id="instruction"></span>
+    </p>
+    <div id="multi">
+        <div id="wago-string" contenteditable="false"></div>
+        <div id="copy-here" contenteditable="true"></div>
+        <div id="output" contenteditable="false"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $("#wago-string, #copy-here, #output").hide();
+
+        $("button").click(function(){
+
+            var url = $("input").val();
+            if (url === null) return;
+
+            var result = url.match(/(?:https:\/\/wago.io\/)([^/]+)/);
+            if (result === null) return;
+
+            $.get("https://data.wago.io/api/raw/encoded?id=" + result[1], function(data) {
+                if (data === null) return;
+
+                $("#wago-string").text(data).show().focus();
+                $("#instruction").text("Copy Left text to Right side");
+                $("#copy-here").text("").show();
+                $("#output").show();
+                $("#copy-here").on("change keyup paste", function(){
+                    $("#instruction").text("");
+                    $("#output").empty();
+                    var t1 = $("#wago-string").text();
+                    var t2 = $("#copy-here").text();
+                    var last = 0;
+                    var ok = true;
+                    var modified = false;
+                    for (var i = 0; i < t1.length && i < t2.length ; i++) {
+                        if (t1.charAt(i) !== t2.charAt(i)) {
+                            if (ok) {
+                                $("#output").append($("<span>").text(t2.substr(last, i-last)));
+                                last = i;
+                            }
+                            ok = false;
+                            modified = true
+                        } else {
+                            if (!ok) {
+                                $("#output").append($("<span>").addClass("red").text(t2.substr(last, i-last)));
+                                last = i;
+                            }
+                            ok = true;
+                        }
+                    }
+                    if (ok) {
+                        $("#output").append($("<span>").addClass("green").text(t2.substr(last, t2.length-last)));
+                    } else {
+                        $("#output").append($("<span>").addClass("red").text(t2.substr(last, t2.length-last)));
+                    }
+                    if(!modified) {
+                        $("#instruction").html("<span class='green'>Your copy pasta is fine</span>");
+                    }else{
+                        $("#instruction").html("<span class='red'>Your copy pasta is broken, try <a href='https://www.malwarebytes.com/adwcleaner/'>adwcleaner</a> to clean your computer from a virus !!</span>");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
